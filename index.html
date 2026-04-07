@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC-DMIS Version & License Checker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: white;
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  header svg { flex-shrink: 0; }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-top: 3px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+  }
+
+  .input-section {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #666;
+  }
+
+  input[type="text"] {
+    padding: 11px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 200px;
+    transition: border-color 0.2s;
+    outline: none;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  input[type="text"]:focus { border-color: #0f3460; }
+  input[type="text"].error { border-color: #e74c3c; }
+
+  .btn {
+    padding: 11px 28px;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  .error-msg {
+    color: #e74c3c;
+    font-size: 0.83rem;
+    margin-top: 6px;
+    display: none;
+  }
+
+  .status-banner {
+    display: none;
+    border-radius: 10px;
+    padding: 14px 22px;
+    margin-bottom: 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-banner.active {
+    display: flex;
+    background: #e8f8f1;
+    border: 1.5px solid #27ae60;
+    color: #1e8449;
+  }
+
+  .status-banner.expired {
+    display: flex;
+    background: #fdf2f2;
+    border: 1.5px solid #e74c3c;
+    color: #c0392b;
+  }
+
+  .results-section { display: none; }
+
+  .results-section h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 18px;
+    color: #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  thead th {
+    background: #1a1a2e;
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  thead th:first-child { border-radius: 8px 0 0 0; }
+  thead th:last-child  { border-radius: 0 8px 0 0; }
+
+  tbody tr:nth-child(even) { background: #f8f9fc; }
+  tbody tr:hover { background: #eef1f8; }
+
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+
+  .version-badge {
+    display: inline-block;
+    background: #e8eaf6;
+    color: #3949ab;
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .sp-badge { font-weight: 700; color: #1a1a2e; }
+  .sp-date  { color: #666; font-size: 0.85rem; }
+
+  .download-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #0f3460;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    border: 1.5px solid #0f3460;
+    border-radius: 6px;
+    transition: background 0.18s, color 0.18s;
+  }
+
+  .download-link:hover { background: #0f3460; color: white; }
+
+  .na-badge {
+    display: inline-block;
+    background: #f5f5f5;
+    color: #aaa;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-style: italic;
+  }
+
+  .info-box {
+    background: #f0f4ff;
+    border-left: 4px solid #3949ab;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .info-box strong { color: #1a1a2e; }
+  .tip { font-size: 0.8rem; color: #999; margin-top: 8px; }
+
+  footer {
+    text-align: center;
+    color: #bbb;
+    font-size: 0.78rem;
+    padding: 24px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 20px; }
+    .container { padding: 16px; }
+    .card { padding: 20px; }
+    input[type="text"] { width: 160px; }
+    table { font-size: 0.8rem; }
+    thead th, tbody td { padding: 9px 10px; }
+  }
+
+  .win-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin: 2px 2px 2px 0;
+    white-space: nowrap;
+  }
+  .win11 { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+  .win10 { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .win8  { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }
+  .win7  { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+
+  .hex-supported {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #27ae60;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .hex-not-supported {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #bbb;
+    font-size: 0.85rem;
+  }
+  .info-hexagon {
+    background: #f5f0ff;
+    border-left: 4px solid #7b1fa2;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 28px;
+    line-height: 1.7;
+  }
+  .info-hexagon strong { color: #4a148c; }
+  .info-hexagon .info-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #7b1fa2;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+    <rect width="40" height="40" rx="8" fill="rgba(255,255,255,0.1)"/>
+    <path d="M8 20 L16 12 L24 20 L32 12" stroke="#4fc3f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="20" cy="24" r="6" stroke="#4fc3f7" stroke-width="2.5" fill="none"/>
+    <circle cx="20" cy="24" r="2" fill="#4fc3f7"/>
+  </svg>
+  <div>
+    <h1>PC-DMIS Version & License Checker</h1>
+    <p>Find the latest available SP for your SMA license expiry date</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="info-box">
+      <strong>How it works:</strong> Enter your SMA (Software Maintenance Agreement) license expiry date.
+      The tool will show the latest Service Pack available for each PC-DMIS version that was released
+      <em>on or before</em> your expiry date — meaning you are entitled to download it.
+      <br><br>
+      <strong>How to find your expiry date:</strong> Go to CLM and view installed licenses.
+      The expiry date is shown under "Expiration Date".
+    </div>
+
+    <div class="input-section">
+      <div class="input-group">
+        <label>License Expiry Date</label>
+        <input type="text" id="dateInput" placeholder="DD/MM/YYYY" maxlength="10">
+        <div class="error-msg" id="errorMsg">Please enter a valid date (DD/MM/YYYY)</div>
+      </div>
+      <button class="btn" onclick="checkDate()">Check Versions</button>
+    </div>
+    <p class="tip">Example: 15/11/2022 → shows the latest SP per version released on or before that date</p>
+  </div>
+
+  <!-- SMA Status -->
+  <div class="status-banner" id="smaBanner"></div>
+
+  <!-- SP availability -->
+  <div class="status-banner" id="spBanner"></div>
+
+
+  <!-- Hexagon support info -->
+  <div class="info-hexagon" id="hexSupportInfo" style="display:none;">
+    <div class="info-title">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#7b1fa2" stroke-width="1.6"/><path d="M7 6v4M7 4.5v.5" stroke="#7b1fa2" stroke-width="1.6" stroke-linecap="round"/></svg>
+      What does "Supported by Hexagon" mean?
+    </div>
+    It is always the current version plus the last two that are <strong>'supported'</strong>. This means Hexagon still actively fixes bugs in those versions through Service Packs. So for the current <strong>2025.2</strong> we still support the prior two, <strong>2025.1</strong> and <strong>2024.2</strong>. As soon as we release <strong>2026.1</strong> we will support 2025.2 and 2025.1, and so on.
+  </div>
+
+  <!-- Results table -->
+  <div class="card results-section" id="resultsSection">
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 9h14M9 2v14" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Available Versions for Your License
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>PC-DMIS Version</th>
+          <th>Latest Available SP</th>
+          <th>SP Release Date</th>
+          <th>Supported Windows</th>
+          <th>Supported by Hexagon</th>
+          <th>Download</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>PC-DMIS Version Checker · Data sourced from Hexagon MI · Created by Hexagon UK Apps Team</footer>
+
+<script>
+const allData = {
+  "2017 R1": [
+    { sp: "2017 R1 SP1",  date: "2017-03-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP1/x64" },
+    { sp: "2017 R1 SP5",  date: "2017-08-31", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP5/x64" },
+    { sp: "2017 R1 SP6",  date: "2017-10-02", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP6/x64" },
+    { sp: "2017 R1 SP7",  date: "2018-01-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP7/x64" },
+    { sp: "2017 R1 SP8",  date: "2018-04-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP8/x64" },
+    { sp: "2017 R1 SP9",  date: "2018-05-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP9/x64" },
+    { sp: "2017 R1 SP10", date: "2018-07-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R1/SP10/x64" }
+  ],
+  "2017 R2": [
+    { sp: "2017 R2 Release", date: "2017-07-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/Release/x64" },
+    { sp: "2017 R2 SP1",     date: "2017-08-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP1/x64" },
+    { sp: "2017 R2 SP2",     date: "2017-08-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP2/x64" },
+    { sp: "2017 R2 SP3",     date: "2017-09-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP3/x64" },
+    { sp: "2017 R2 SP4",     date: "2017-11-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP4/x64" },
+    { sp: "2017 R2 SP5",     date: "2017-12-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP5/x64" },
+    { sp: "2017 R2 SP6",     date: "2018-02-08", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP6/x64" },
+    { sp: "2017 R2 SP7",     date: "2018-03-07", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP7/x64" },
+    { sp: "2017 R2 SP8",     date: "2018-05-07", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP8/x64" },
+    { sp: "2017 R2 SP9",     date: "2018-07-20", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP9/x64" },
+    { sp: "2017 R2 SP10",    date: "2018-09-27", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP10/x64" },
+    { sp: "2017 R2 SP11",    date: "2018-10-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP11/x64" },
+    { sp: "2017 R2 SP12",    date: "2018-12-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP12/x64" },
+    { sp: "2017 R2 SP13",    date: "2019-03-14", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP13/x64" },
+    { sp: "2017 R2 SP14",    date: "2019-05-01", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2017_R2/SP14/x64" }
+  ],
+  "2018 R1": [
+    { sp: "2018 R1 Release", date: "2018-02-20", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/Release/x64" },
+    { sp: "2018 R1 SP1",     date: "2018-03-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP1/x64" },
+    { sp: "2018 R1 SP2",     date: "2018-04-25", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP2/x64" },
+    { sp: "2018 R1 SP3",     date: "2018-06-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP3/x64" },
+    { sp: "2018 R1 SP4",     date: "2018-07-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP4/x64" },
+    { sp: "2018 R1 SP5",     date: "2018-09-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP5/x64" },
+    { sp: "2018 R1 SP6",     date: "2018-12-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP6/x64" },
+    { sp: "2018 R1 SP7",     date: "2019-03-01", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP7/x64" },
+    { sp: "2018 R1 SP8",     date: "2019-05-08", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP8/x64" },
+    { sp: "2018 R1 SP9",     date: "2019-08-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R1/SP9/x64" }
+  ],
+  "2018 R2": [
+    { sp: "2018 R2 Release", date: "2018-07-31", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/Release/x64" },
+    { sp: "2018 R2 SP1",     date: "2018-08-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP1/x64" },
+    { sp: "2018 R2 SP2",     date: "2018-10-18", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP2/x64" },
+    { sp: "2018 R2 SP3",     date: "2018-11-14", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP3/x64" },
+    { sp: "2018 R2 SP4",     date: "2018-12-20", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP4/x64" },
+    { sp: "2018 R2 SP5",     date: "2019-02-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP5/x64" },
+    { sp: "2018 R2 SP6",     date: "2019-04-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP6/x64" },
+    { sp: "2018 R2 SP7",     date: "2019-06-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP7/x64" },
+    { sp: "2018 R2 SP8",     date: "2019-08-27", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP8/x64" },
+    { sp: "2018 R2 SP9",     date: "2020-02-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP9/x64" },
+    { sp: "2018 R2 SP10",    date: "2020-03-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP10/x64" },
+    { sp: "2018 R2 SP11",    date: "2020-05-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP11/x64" },
+    { sp: "2018 R2 SP12",    date: "2020-06-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP12/x64" },
+    { sp: "2018 R2 SP13",    date: "2020-08-30", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP13/x64" },
+    { sp: "2018 R2 SP14",    date: "2021-01-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2018_R2/SP14/x64" }
+  ],
+  "2019 R1": [
+    { sp: "2019 R1 Release", date: "2019-02-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/Release/x64" },
+    { sp: "2019 R1 SP1",     date: "2019-04-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP1/x64" },
+    { sp: "2019 R1 SP2",     date: "2019-04-25", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP2/x64" },
+    { sp: "2019 R1 SP3",     date: "2019-06-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP3/x64" },
+    { sp: "2019 R1 SP4",     date: "2019-07-31", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP4/x64" },
+    { sp: "2019 R1 SP5",     date: "2019-09-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP5/x64" },
+    { sp: "2019 R1 SP6",     date: "2019-12-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP6/x64" },
+    { sp: "2019 R1 SP7",     date: "2020-02-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP7/x64" },
+    { sp: "2019 R1 SP8",     date: "2020-03-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP8/x64" },
+    { sp: "2019 R1 SP9",     date: "2020-04-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP9/x64" },
+    { sp: "2019 R1 SP10",    date: "2020-06-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP10/x64" },
+    { sp: "2019 R1 SP11",    date: "2021-01-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R1/SP11/x64" }
+  ],
+  "2019 R2": [
+    { sp: "2019 R2 Release", date: "2019-08-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/Release/x64" },
+    { sp: "2019 R2 SP1",     date: "2019-09-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP1/x64" },
+    { sp: "2019 R2 SP2",     date: "2019-11-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP2/x64" },
+    { sp: "2019 R2 SP3",     date: "2020-02-07", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP3/x64" },
+    { sp: "2019 R2 SP4",     date: "2020-03-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP4/x64" },
+    { sp: "2019 R2 SP5",     date: "2020-04-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP5/x64" },
+    { sp: "2019 R2 SP6",     date: "2020-05-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP6/x64" },
+    { sp: "2019 R2 SP7",     date: "2020-06-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP7/x64" },
+    { sp: "2019 R2 SP8",     date: "2020-09-30", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP8/x64" },
+    { sp: "2019 R2 SP9",     date: "2020-12-17", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP9/x64" },
+    { sp: "2019 R2 SP10",    date: "2021-02-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP10/x64" },
+    { sp: "2019 R2 SP11",    date: "2021-06-24", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2019_R2/SP11/x64" }
+  ],
+  "2020 R1": [
+    { sp: "2020 R1 Release", date: "2020-02-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/Release/x64" },
+    { sp: "2020 R1 SP1",     date: "2020-03-24", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP1/x64" },
+    { sp: "2020 R1 SP2",     date: "2020-04-29", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP2/x64" },
+    { sp: "2020 R1 SP3",     date: "2020-05-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP3/x64" },
+    { sp: "2020 R1 SP4",     date: "2020-06-25", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP4/x64" },
+    { sp: "2020 R1 SP5",     date: "2020-07-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP5/x64" },
+    { sp: "2020 R1 SP6",     date: "2020-09-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP6/x64" },
+    { sp: "2020 R1 SP7",     date: "2020-10-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP7/x64" },
+    { sp: "2020 R1 SP8",     date: "2020-11-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP8/x64" },
+    { sp: "2020 R1 SP9",     date: "2020-12-08", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP9/x64" },
+    { sp: "2020 R1 SP10",    date: "2021-02-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP10/x64" },
+    { sp: "2020 R1 SP11",    date: "2021-02-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP11/x64" },
+    { sp: "2020 R1 SP12",    date: "2021-02-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP12/x64" },
+    { sp: "2020 R1 SP13",    date: "2021-04-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP13/x64" },
+    { sp: "2020 R1 SP14",    date: "2021-10-07", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP14/x64" },
+    { sp: "2020 R1 SP15",    date: "2021-11-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R1/SP15/x64" }
+  ],
+  "2020 R2": [
+    { sp: "2020 R2 Release", date: "2020-09-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/Release/x64" },
+    { sp: "2020 R2 SP1",     date: "2020-10-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP1/x64" },
+    { sp: "2020 R2 SP2",     date: "2020-11-02", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP2/x64" },
+    { sp: "2020 R2 SP3",     date: "2020-11-24", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP3/x64" },
+    { sp: "2020 R2 SP4",     date: "2020-12-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP4/x64" },
+    { sp: "2020 R2 SP5",     date: "2021-02-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP5/x64" },
+    { sp: "2020 R2 SP6",     date: "2021-04-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP6/x64" },
+    { sp: "2020 R2 SP7",     date: "2021-05-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP7/x64" },
+    { sp: "2020 R2 SP8",     date: "2021-06-01", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP8/x64" },
+    { sp: "2020 R2 SP9",     date: "2021-09-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP9/x64" },
+    { sp: "2020 R2 SP10",    date: "2021-11-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP10/x64" },
+    { sp: "2020 R2 SP11",    date: "2022-03-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP11/x64" },
+    { sp: "2020 R2 SP12",    date: "2022-06-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP12/x64" },
+    { sp: "2020 R2 SP13",    date: "2022-08-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP13/x64" },
+    { sp: "2020 R2 SP14",    date: "2022-09-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2020_R2/SP14/x64" }
+  ],
+  "2021.1": [
+    { sp: "2021.1 Release", date: "2021-04-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/Release/x64" },
+    { sp: "2021.1 SP1",     date: "2021-04-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP1/x64" },
+    { sp: "2021.1 SP2",     date: "2021-04-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP2/x64" },
+    { sp: "2021.1 SP3",     date: "2021-06-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP3/x64" },
+    { sp: "2021.1 SP4",     date: "2021-07-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP4/x64" },
+    { sp: "2021.1 SP5",     date: "2021-08-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP5/x64" },
+    { sp: "2021.1 SP6",     date: "2021-09-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP6/x64" },
+    { sp: "2021.1 SP7",     date: "2021-12-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP7/x64" },
+    { sp: "2021.1 SP8",     date: "2022-03-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP8/x64" },
+    { sp: "2021.1 SP9",     date: "2022-05-02", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP9/x64" },
+    { sp: "2021.1 SP10",    date: "2022-07-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP10/x64" },
+    { sp: "2021.1 SP11",    date: "2023-01-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.1/SP11/x64" }
+  ],
+  "2021.2": [
+    { sp: "2021.2 Release", date: "2021-08-31", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/Release/x64" },
+    { sp: "2021.2 SP1",     date: "2021-10-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP1/x64" },
+    { sp: "2021.2 SP2",     date: "2021-12-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP2/x64" },
+    { sp: "2021.2 SP3",     date: "2022-03-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP3/x64" },
+    { sp: "2021.2 SP4",     date: "2022-05-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP4/x64" },
+    { sp: "2021.2 SP5",     date: "2022-06-27", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP5/x64" },
+    { sp: "2021.2 SP6",     date: "2022-08-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP6/x64" },
+    { sp: "2021.2 SP7",     date: "2022-09-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP7/x64" },
+    { sp: "2021.2 SP8",     date: "2022-10-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP8/x64" },
+    { sp: "2021.2 SP9",     date: "2022-12-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP9/x64" },
+    { sp: "2021.2 SP10",    date: "2023-02-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP10/x64" },
+    { sp: "2021.2 SP11",    date: "2023-05-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP11/x64" },
+    { sp: "2021.2 SP12",    date: "2023-07-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2021.2/SP12/x64" }
+  ],
+  "2022.1": [
+    { sp: "2022.1 Release", date: "2022-04-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/Release/x64" },
+    { sp: "2022.1 SP1",     date: "2022-04-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP1/x64" },
+    { sp: "2022.1 SP2",     date: "2022-05-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP2/x64" },
+    { sp: "2022.1 SP3",     date: "2022-07-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP3/x64" },
+    { sp: "2022.1 SP4",     date: "2022-08-17", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP4/x64" },
+    { sp: "2022.1 SP5",     date: "2022-12-02", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP5/x64" },
+    { sp: "2022.1 SP6",     date: "2023-01-27", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP6/x64" },
+    { sp: "2022.1 SP7",     date: "2023-02-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP7/x64" },
+    { sp: "2022.1 SP8",     date: "2023-04-18", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP8/x64" },
+    { sp: "2022.1 SP9",     date: "2023-05-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP9/x64" },
+    { sp: "2022.1 SP10",    date: "2023-07-18", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP10/x64" },
+    { sp: "2022.1 SP11",    date: "2023-09-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.1/SP11/x64" }
+  ],
+  "2022.2": [
+    { sp: "2022.2 Release", date: "2022-08-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/Release/x64" },
+    { sp: "2022.2 SP1",     date: "2022-11-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP1/x64" },
+    { sp: "2022.2 SP2",     date: "2022-12-20", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP2/x64" },
+    { sp: "2022.2 SP3",     date: "2023-02-14", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP3/x64" },
+    { sp: "2022.2 SP4",     date: "2023-03-31", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP4/x64" },
+    { sp: "2022.2 SP5",     date: "2023-05-25", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP5/x64" },
+    { sp: "2022.2 SP6",     date: "2023-08-08", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP6/x64" },
+    { sp: "2022.2 SP7",     date: "2023-11-02", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP7/x64" },
+    { sp: "2022.2 SP8",     date: "2023-05-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2022.2/SP8/x64" }
+  ],
+  "2023.1": [
+    { sp: "2023.1 Release", date: "2023-03-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/Release/x64" },
+    { sp: "2023.1 SP1",     date: "2023-03-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP1/x64" },
+    { sp: "2023.1 SP2",     date: "2023-06-07", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP2/x64" },
+    { sp: "2023.1 SP3",     date: "2023-07-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP3/x64" },
+    { sp: "2023.1 SP4",     date: "2023-08-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP4/x64" },
+    { sp: "2023.1 SP5",     date: "2023-10-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP5/x64" },
+    { sp: "2023.1 SP6",     date: "2023-10-24", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP6/x64" },
+    { sp: "2023.1 SP7",     date: "2024-03-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP7/x64" },
+    { sp: "2023.1 SP8",     date: "2024-05-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP8/x64" },
+    { sp: "2023.1 SP9",     date: "2024-09-24", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.1/SP9/x64" }
+  ],
+  "2023.2": [
+    { sp: "2023.2 Release", date: "2023-09-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/Release/x64" },
+    { sp: "2023.2 SP1",     date: "2023-10-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP1/x64" },
+    { sp: "2023.2 SP2",     date: "2023-10-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP2/x64" },
+    { sp: "2023.2 SP3",     date: "2023-12-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP3/x64" },
+    { sp: "2023.2 SP4",     date: "2024-03-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP4/x64" },
+    { sp: "2023.2 SP5",     date: "2024-03-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP5/x64" },
+    { sp: "2023.2 SP6",     date: "2024-04-17", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP6/x64" },
+    { sp: "2023.2 SP7",     date: "2024-05-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP7/x64" },
+    { sp: "2023.2 SP8",     date: "2024-06-06", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP8/x64" },
+    { sp: "2023.2 SP9",     date: "2024-06-18", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP9/x64" },
+    { sp: "2023.2 SP10",    date: "2024-08-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP10/x64" },
+    { sp: "2023.2 SP11",    date: "2024-09-27", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP11/x64" },
+    { sp: "2023.2 SP12",    date: "2024-12-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP12/x64" },
+    { sp: "2023.2 SP13",    date: "2025-01-21", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP13/x64" },
+    { sp: "2023.2 SP14",    date: "2025-03-31", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP14/x64" },
+    { sp: "2023.2 SP15",    date: "2025-07-18", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2023.2/SP15/x64" }
+  ],
+  "2024.1": [
+    { sp: "2024.1 Release", date: "2024-03-27", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/Release/x64" },
+    { sp: "2024.1 SP1",     date: "2024-04-10", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP1/x64" },
+    { sp: "2024.1 SP2",     date: "2024-06-07", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP2/x64" },
+    { sp: "2024.1 SP3",     date: "2024-07-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP3/x64" },
+    { sp: "2024.1 SP4",     date: "2024-09-17", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP4/x64" },
+    { sp: "2024.1 SP5",     date: "2024-12-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP5/x64" },
+    { sp: "2024.1 SP6",     date: "2025-01-17", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP6/x64" },
+    { sp: "2024.1 SP7",     date: "2025-04-09", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP7/x64" },
+    { sp: "2024.1 SP8",     date: "2025-06-16", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP8/x64" },
+    { sp: "2024.1 SP9",     date: "2025-07-29", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP9/x64" },
+    { sp: "2024.1 SP10",    date: "2025-09-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP10/x64" },
+    { sp: "2024.1 SP11",    date: "2025-11-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP11/x64" }
+  ],
+  "2024.2": [
+    { sp: "2024.2 Release", date: "2024-09-25", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/Release/x64" },
+    { sp: "2024.2 SP1",     date: "2024-10-24", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP1/x64" },
+    { sp: "2024.2 SP2",     date: "2024-12-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP2/x64" },
+    { sp: "2024.2 SP3",     date: "2025-02-13", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP3/x64" },
+    { sp: "2024.2 SP4",     date: "2025-04-02", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP4/x64" },
+    { sp: "2024.2 SP5",     date: "2025-06-14", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP5/x64" },
+    { sp: "2024.2 SP6",     date: "2025-08-04", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP6/x64" },
+    { sp: "2024.2 SP8",     date: "2025-11-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP8/x64" },
+    { sp: "2024.2 SP9",     date: "2026-02-05", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.2/SP9/x64" },
+    { sp: "2024.2 SP10",    date: "2025-09-11", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2024.1/SP10/x64" }
+  ],
+  "2025.1": [
+    { sp: "2025.1 Release", date: "2025-05-28", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.1/Release/x64" },
+    { sp: "2025.1 SP1",     date: "2025-07-15", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.1/SP1/x64" },
+    { sp: "2025.1 SP2",     date: "2025-08-26", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.1/SP2/x64" },
+    { sp: "2025.1 SP4",     date: "2025-10-23", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.1/SP4/x64" },
+    { sp: "2025.1 SP5",     date: "2026-01-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.1/SP5/x64" },
+    { sp: "2025.1 SP6",     date: "2026-03-12", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.1/SP6" }
+  ],
+  "2025.2": [
+    { sp: "2025.2 Release", date: "2025-10-22", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.2/Release/x64" },
+    { sp: "2025.2 SP1",     date: "2025-12-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.2/SP1/x64" },
+    { sp: "2025.2 SP2",     date: "2026-01-19", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.2/SP2/x64" },
+    { sp: "2025.2 SP3",     date: "2026-03-03", url: "https://downloads.ms.hexagonmi.com/PC-DMIS-Versions/Release/2025.2/SP3/x64" }
+  ]
+};
+
+// Auto-format DD/MM/YYYY
+document.getElementById('dateInput').addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g, '');
+  if (v.length >= 3 && v.length <= 4) v = v.slice(0,2) + '/' + v.slice(2);
+  else if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4,8);
+  e.target.value = v;
+  e.target.classList.remove('error');
+  document.getElementById('errorMsg').style.display = 'none';
+});
+
+document.getElementById('dateInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkDate();
+});
+
+function parseDate(str) {
+  const parts = str.split('/');
+  if (parts.length !== 3) return null;
+  const [d, m, y] = parts.map(Number);
+  if (!d || !m || !y || d < 1 || d > 31 || m < 1 || m > 12 || y < 2000 || y > 2100) return null;
+  return new Date(y, m - 1, d);
+}
+
+function formatDate(isoStr) {
+  const [y, m, d] = isoStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function todayMidnight() {
+  const t = new Date();
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+
+// Top 3 most recent versions are actively supported by Hexagon
+const hexSupportedVersions = ["2025.2", "2025.1", "2024.2"];
+
+function getHexSupport(version) {
+  if (hexSupportedVersions.includes(version)) {
+    return `<span class="hex-supported">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#e8f8f1" stroke="#27ae60" stroke-width="1.5"/><path d="M4.5 8l2.5 2.5 4.5-4.5" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Supported
+    </span>`;
+  }
+  return `<span class="hex-not-supported">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#f5f5f5" stroke="#ccc" stroke-width="1.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#ccc" stroke-width="1.8" stroke-linecap="round"/></svg>
+    Not supported
+  </span>`;
+}
+
+function getWindowsSupport(version) {
+  // 2022.2 and later: Windows 11 + Windows 10
+  const win11versions = ["2022.2","2023.1","2023.2","2024.1","2024.2","2025.1","2025.2"];
+  if (win11versions.includes(version)) {
+    return '<span class="win-badge win11">Win 11</span><span class="win-badge win10">Win 10</span>';
+  }
+  // 2022.1: Windows 10 + Windows 8 (no Win 7, no Win 11)
+  if (version === "2022.1") {
+    return '<span class="win-badge win10">Win 10</span><span class="win-badge win8">Win 8</span>';
+  }
+  // 2017 R1 through 2021.2: Windows 10 + Windows 8 + Windows 7
+  return '<span class="win-badge win10">Win 10</span><span class="win-badge win8">Win 8</span><span class="win-badge win7">Win 7</span>';
+}
+
+
+const iconOk = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const iconX  = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/><path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+
+function checkDate() {
+  const input   = document.getElementById('dateInput').value.trim();
+  const errorMsg = document.getElementById('errorMsg');
+  const inputEl  = document.getElementById('dateInput');
+
+  const userDate = parseDate(input);
+  if (!userDate) {
+    inputEl.classList.add('error');
+    errorMsg.style.display = 'block';
+    ['smaBanner','spBanner','resultsSection','hexSupportInfo'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    return;
+  }
+
+  inputEl.classList.remove('error');
+  errorMsg.style.display = 'none';
+
+  const today = todayMidnight();
+
+  // ── 1. SMA Active / Not Active — based on today's date ──
+  const smaBanner = document.getElementById('smaBanner');
+  if (userDate >= today) {
+    smaBanner.className = 'status-banner active';
+    smaBanner.innerHTML = `${iconOk}
+      <span><strong>SMA is Active</strong> — Your license expires on <strong>${input}</strong>, which is today or in the future.</span>`;
+  } else {
+    smaBanner.className = 'status-banner expired';
+    smaBanner.innerHTML = `${iconX}
+      <span><strong>SMA is Not Active</strong> — Your license expired on <strong>${input}</strong>. The table below shows the SPs you were entitled to at that time.</span>`;
+  }
+  smaBanner.style.display = 'flex';
+
+  // ── 2. SP Results — based on license expiry date ──
+  const results = [];
+  for (const [version, sps] of Object.entries(allData)) {
+    const eligible = sps.filter(sp => sp.date && new Date(sp.date) <= userDate);
+    if (eligible.length > 0) {
+      const latest = eligible.reduce((a, b) => new Date(a.date) >= new Date(b.date) ? a : b);
+      results.push({ version, sp: latest.sp, date: latest.date, url: latest.url });
+    } else {
+      results.push({ version, sp: null, date: null, url: null });
+    }
+  }
+
+  const hasAny = results.some(r => r.sp !== null);
+  const spBanner = document.getElementById('spBanner');
+  if (hasAny) {
+    spBanner.className = 'status-banner active';
+    spBanner.innerHTML = `${iconOk}
+      <span>SP versions found for expiry date <strong>${input}</strong>. See the table below.</span>`;
+  } else {
+    spBanner.className = 'status-banner expired';
+    spBanner.innerHTML = `${iconX}
+      <span>No SP releases were found on or before <strong>${input}</strong>.</span>`;
+  }
+  spBanner.style.display = 'flex';
+
+  // ── 3. Table ──
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = '';
+  results.slice().reverse().forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.sp) {
+      tr.innerHTML = `
+        <td><span class="version-badge">${r.version}</span></td>
+        <td><span class="sp-badge">${r.sp}</span></td>
+        <td><span class="sp-date">${formatDate(r.date)}</span></td>
+        <td>${getWindowsSupport(r.version)}</td>
+        <td>${getHexSupport(r.version)}</td>
+        <td><a class="download-link" href="${r.url}" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M6.5 1v8M3 6.5l3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 11h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          Download
+        </a></td>`;
+    } else {
+      tr.innerHTML = `
+        <td><span class="version-badge">${r.version}</span></td>
+        <td><span class="na-badge">Not available</span></td>
+        <td><span class="na-badge">—</span></td>
+        <td>${getWindowsSupport(r.version)}</td>
+        <td>${getHexSupport(r.version)}</td>
+        <td><span class="na-badge">—</span></td>`;
+    }
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('hexSupportInfo').style.display = 'block';
+}
+</script>
+</body>
+</html>
